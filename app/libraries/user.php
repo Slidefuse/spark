@@ -1,6 +1,6 @@
 <?php
 
-class SparkUser {
+class User {
 
 	public function SparkInit() {
 		
