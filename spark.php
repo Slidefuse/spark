@@ -111,8 +111,7 @@ class SparkLibrary {
 */
 class Spark {
 
-	public $router;
-
+	// Spark Cosntruct Function
 	function __construct() {
 
 		$this->controllers = array();
@@ -138,10 +137,12 @@ class Spark {
 		$this->calculateRoute();		
 	}
 
+	// A function to return the router object.
 	public function getRouter() {
 		return $this->router;
 	}
 
+	// A function that loads all the files within an app.
 	private function loadApp($path) {
 		$appPath = $path."/app";
 		foreach (glob($path."/app/libraries/*.php") as $filename) {
@@ -159,6 +160,7 @@ class Spark {
 		}
 	}
 
+	// A function to render a view.
 	public function renderView($name, $data = array()) {
 		$name = strtolower($name);
 		$this->data = $this->arrayToObject($data);
@@ -168,37 +170,51 @@ class Spark {
 		$this->data = null;
 	}
 
+	// A helper function to render the header.
 	public function renderHeader($title = "SparkTitle") {
 		$headerData = array("title" => $title);
 		SparkLibrary::call("SparkHeaderData", $headerData);
 		$this->renderView("header", $headerData);
 	}
 
+	// A helper function to render the footer.
 	public function renderFooter() {
 		$footerData = array();
 		SparkLibrary::call("SparkFooterData", $footerData);
 		$this->renderView("footer", $footerData);
 	}	
 
+	// A function that ensures a controller exists.
+	public function controllerExists($name) {
+		return isset($this->controllers[$name]) ? $this->controllers[$name] : false;
+	}
+
+	// A function to start a controller, method, and send the data.
 	public function startController($name, $method = "index", $data = array()) {
-		if (isset($this->controllers[$name]) and $controllerPath = $this->controllers[$name]) {
-
+		if ($controllerPath = $this->controllerExists($name)) {
+			// Require the file containing our controller functions
 			require($controllerPath);
-			$controller = new Controller($this);
 
-			$handler = array($controller, $method);
+			// Lets make sure our class exists
+			if (class_exists($name)) {
 
-			if (is_callable($handler)) {
-				call_user_func_array($handler, $data);
+				// Construct our new class.
+				$controller = new $name($this);
+				$handler = array($controller, $method);
+				if (is_callable($handler)) {
+					call_user_func_array($handler, $data);
+				} else {
+					$this->startController("spark_error", "e404");
+				}
 			} else {
 				$this->startController("spark_error", "e404");
 			}
 		} else {
-
 			$this->startController("spark_error", "e404");
 		}
 	}
 
+	// A function to determine the controller and start it, given the route.
 	private function calculateRoute() {
 		$routeInfo = $this->router->routeInfo();
 		$pathArgs = $routeInfo['args'];
@@ -215,18 +231,15 @@ class Spark {
 
 		$data = $pathArgs;
 
-		if (isset($this->controllers[$baseName])) {
-			$this->startController($baseName, $methodName, $data);
-		} else {
-			$this->startController("spark_error", "e404");
-		}
-
+		$this->startController($baseName, $methodName, $data);
 	}
 
+	// A utility function to convert an array to an object.
 	public function arrayToObject($array) {
 		return json_decode(json_encode($array), false);
 	}
 
+	// A function to get the $SF Object
 	public static function Get() {
 		return $GLOBALS['SF'];
 	}
@@ -239,7 +252,6 @@ $SF = new Spark();
 /*
 	SparkPath
 */
-
 class Path {
 	public static function url($path) {
 		$protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";

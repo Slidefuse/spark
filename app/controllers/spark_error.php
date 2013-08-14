@@ -1,6 +1,6 @@
 <?php
 
-class Controller extends SparkController {
+class Spark_Error extends SparkController {
 
 	function e404() {
 		echo "404";
