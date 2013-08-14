@@ -1,13 +1,13 @@
 <?php
 
-// We must initialize hte Slidefuse 
+class SparkUser {
 
-class User {
-
-	function __construct($userid = false) {
-		if ($userid) {
-			
-		}
+	public function SparkInit() {
+		
 	}
 
 }
+
+SparkLibrary::register(new SparkUser());
+
+?>

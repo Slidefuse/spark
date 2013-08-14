@@ -33,6 +33,7 @@ class SparkController {
 	}
 }
 
+
 class SparkRouter {
 	private $error = false;
 	private $server;
@@ -72,7 +73,45 @@ class SparkRouter {
 	}
 }
 
+/* 
+	Mostly Static SparkLibrary
+*/
+class SparkLibrary {
+
+	public static $libraries = array();
+
+	public static function register($object) {
+		self::$libraries[get_class($object)] = $object;
+	}
+
+	public static function get($name) {
+		return self::$libraries[$name];
+	}
+
+	public static function call($method) {
+		$arguments = func_get_args();
+		$method = array_shift($arguments);
+
+		$retValue = null;
+		foreach (self::$libraries as $library) {
+			$handler = array($library, $method);
+			if (is_callable($handler)) {
+				if ($ret = call_user_func_array($handler, $arguments) and $ret !== null) {
+					$retValue = $ret;
+				}
+			}
+		}
+		return $retValue;
+	}
+
+}
+
+/*
+	Main Spark Class
+*/
 class Spark {
+
+	public $router;
 
 	function __construct() {
 
@@ -94,7 +133,13 @@ class Spark {
 			$this->loadApp($this->appPath);
 		}
 
-		$this->calculateRoute();
+		SparkLibrary::call("SparkInit");
+
+		$this->calculateRoute();		
+	}
+
+	public function getRouter() {
+		return $this->router;
 	}
 
 	private function loadApp($path) {
@@ -116,11 +161,24 @@ class Spark {
 
 	public function renderView($name, $data = array()) {
 		$name = strtolower($name);
-		$this->data = $data;
+		$this->data = $this->arrayToObject($data);
 		if ($viewPath = $this->views[$name]) {
 			include($viewPath);
 		}
+		$this->data = null;
 	}
+
+	public function renderHeader($title = "SparkTitle") {
+		$headerData = array("title" => $title);
+		SparkLibrary::call("SparkHeaderData", $headerData);
+		$this->renderView("header", $headerData);
+	}
+
+	public function renderFooter() {
+		$footerData = array();
+		SparkLibrary::call("SparkFooterData", $footerData);
+		$this->renderView("footer", $footerData);
+	}	
 
 	public function startController($name, $method = "index", $data = array()) {
 		if (isset($this->controllers[$name]) and $controllerPath = $this->controllers[$name]) {
@@ -141,25 +199,23 @@ class Spark {
 		}
 	}
 
-
 	private function calculateRoute() {
 		$routeInfo = $this->router->routeInfo();
 		$pathArgs = $routeInfo['args'];
 
 		$baseName = "home";
-		if (isset($pathArgs[0])) {
+		if (!empty($pathArgs[0])) {
 			$baseName = strtolower(array_shift($pathArgs));
 		}
 
 		$methodName = "index";
-		if (isset($pathArgs[0])) {
+		if (!empty($pathArgs[0])) {
 			$methodName = strtolower(array_shift($pathArgs));
 		}
 
 		$data = $pathArgs;
 
-
-		if (isset($this->controllers[$baseName]) and $controllerPath = $this->controllers[$baseName]) {
+		if (isset($this->controllers[$baseName])) {
 			$this->startController($baseName, $methodName, $data);
 		} else {
 			$this->startController("spark_error", "e404");
@@ -167,6 +223,46 @@ class Spark {
 
 	}
 
+	public function arrayToObject($array) {
+		return json_decode(json_encode($array), false);
+	}
+
+	public static function Get() {
+		return $GLOBALS['SF'];
+	}
+
 }
 
+//Initiate Spark!
 $SF = new Spark();
+
+/*
+	SparkPath
+*/
+
+class Path {
+	public static function url($path) {
+		$protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+		$url = $protocol.$_SERVER['SERVER_NAME'];
+		if ($_SERVER['SERVER_PORT'] != 80) {
+			$url .= ":".$_SERVER['SERVER_PORT'];
+		}
+		$url .= "/".$path;
+		return $url;
+	}
+
+	public static function active($controller) {
+		//Find a way to get the $SF variable in here so I can access the router thing.
+		return false;
+	}
+
+	public static function listItem($name, $controller, $path = "") {
+		echo "<li ";
+		if (self::active($controller)) {
+			echo "class=\"active\"";
+		}
+		echo "><a href=\"".self::url($controller."/".$path)."\">";
+		echo $name; 
+		echo "</a></li>";
+	}
+}
