@@ -13,8 +13,8 @@
 
 switch (ENVIORNMENT) {
 	case "development":
-		error_reporting(-1);
-		ini_set("display_errors", 1);
+		ini_set('display_errors', 1); 
+		error_reporting(E_ALL);
 		break;
 
 	case "production":
@@ -111,11 +111,18 @@ class SparkLibrary {
 */
 class Spark {
 
+	public $config;
+
 	// Spark Cosntruct Function
 	function __construct() {
 
+		$this->config = array();
+
+		$this->libraries = array();
 		$this->controllers = array();
 		$this->views = array();
+
+		$this->libraryStorage = array();
 
 		$this->sparkPath = realpath(__DIR__);
 		$this->appPath = realpath(__DIR__."/..");
@@ -132,9 +139,24 @@ class Spark {
 			$this->loadApp($this->appPath);
 		}
 
-		SparkLibrary::call("SparkInit");
-
 		$this->calculateRoute();		
+	}
+
+	// Just a function to get a library instance.
+	public function getLibrary($name) {
+		return $this->libraryStorage[$name];
+	}
+
+	// A function to get an instance of a library.
+	public function loadLibrary($name) {
+		if ($libraryPath = $this->libraryExists($name)) {
+			if (!isset($this->libraryStorage[$name])) {
+				require($libraryPath);
+				$lib = new $name();
+			} 
+			return $this->libraryStorage[$name];
+		}
+
 	}
 
 	// A function to return the router object.
@@ -145,8 +167,27 @@ class Spark {
 	// A function that loads all the files within an app.
 	private function loadApp($path) {
 		$appPath = $path."/app";
+
+		$configFile = file_get_contents($path."/app/config.json");
+		$configTable = json_decode($configFile, true);
+
+		$this->config = array_merge($this->config, $configTable);
+
+		// Enviornment Config
+		if (file_exists($path."/app/config_".ENVIORNMENT.".json")) {
+			$configFile = file_get_contents($path."/app/config_".ENVIORNMENT.".json");
+			$configTable = json_decode($configFile, true);
+			$this->config = array_merge($this->config, $configTable);
+		}
+		// /x/ End
+
+		foreach (glob($path."/app/includes/*.php") as $filename) {
+ 			require($filename);
+		}
+
 		foreach (glob($path."/app/libraries/*.php") as $filename) {
- 		   require($filename);
+ 			$baseName = strtolower(basename($filename, ".php"));
+			$this->libraries[$baseName] = $filename;
 		}
 
 		foreach (glob($path."/app/controllers/*.php") as $filename) {
@@ -158,6 +199,8 @@ class Spark {
 			$baseName = strtolower(basename($filename, ".php"));
 			$this->views[$baseName] = $filename;
 		}
+
+
 	}
 
 	// A function to render a view.
@@ -165,7 +208,9 @@ class Spark {
 		$name = strtolower($name);
 		$this->data = $this->arrayToObject($data);
 		if ($viewPath = $this->views[$name]) {
+			$SF = $this;
 			include($viewPath);
+			$SF = null;
 		}
 		$this->data = null;
 	}
@@ -183,6 +228,11 @@ class Spark {
 		SparkLibrary::call("SparkFooterData", $footerData);
 		$this->renderView("footer", $footerData);
 	}	
+
+	// A function that ensures a library exists.
+	public function libraryExists($name) {
+		return isset($this->libraries[$name]) ? $this->libraries[$name] : false;
+	}
 
 	// A function that ensures a controller exists.
 	public function controllerExists($name) {
@@ -252,7 +302,7 @@ $SF = new Spark();
 /*
 	SparkPath
 */
-class Path {
+class SparkPath {
 	public static function url($path) {
 		$protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
 		$url = $protocol.$_SERVER['SERVER_NAME'];

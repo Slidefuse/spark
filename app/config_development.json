@@ -1,0 +1,6 @@
+{
+	"db_host": "aws-mysql.sf-n.org",
+	"db_user": "spencer",
+	"db_pass": "Penguin17",
+	"db_name": "sf_account"
+}
