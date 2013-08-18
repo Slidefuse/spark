@@ -28,7 +28,13 @@ switch (ENVIORNMENT) {
 }
 
 class SparkController {
-	function __construct($spark) {
+	function __construct(&$spark) {
+		$this->spark = $spark;
+	}
+}
+
+class SparkAppInit {
+	function __construct(&$spark) {
 		$this->spark = $spark;
 	}
 }
@@ -121,8 +127,11 @@ class Spark {
 		$this->libraries = array();
 		$this->controllers = array();
 		$this->views = array();
-
 		$this->libraryStorage = array();
+
+		$this->apps = array();
+
+		$this->navbar = array();
 
 		$this->sparkPath = realpath(__DIR__);
 		$this->appPath = realpath(__DIR__."/..");
@@ -138,6 +147,9 @@ class Spark {
 		if (file_exists($this->appPath."/app")) {
 			$this->loadApp($this->appPath);
 		}
+
+		// Tell our apps we're READY!
+		$this->callHook("Init");
 
 		$this->calculateRoute();		
 	}
@@ -200,7 +212,43 @@ class Spark {
 			$this->views[$baseName] = $filename;
 		}
 
+		if (file_exists($path."/app/init.php")) {
+			include($path."/app/init.php");
 
+			$tokens = token_get_all(file_get_contents($path."/app/init.php"));
+			$ctoken = false;
+			$cname = "";
+			foreach ($tokens as $token) {
+				if (is_array($token)) {
+					if ($token[0] == T_CLASS) {
+						$ctoken = true;
+					} elseif ($ctoken and $token[0] == T_STRING) {
+						$cname = $token[1];
+						break;
+					}
+				}
+			}
+
+			$this->apps[$cname] = new $cname($this);
+		}
+	}
+
+	// A function to call a hook
+	public function callHook($method) {
+		$arguments = func_get_args();
+		$method = "hook_" . array_shift($arguments);
+
+		$retValue = null;
+		foreach ($this->apps as $app) {
+			$handler = array($app, $method);
+			//print_r($app);
+			//if (is_callable($handler)) {
+				if ($ret = call_user_func_array($handler, $arguments) and $ret !== null) {
+					$retValue = $ret;
+				}
+			//}
+		}
+		return $retValue;
 	}
 
 	// A function to render a view.
@@ -208,7 +256,7 @@ class Spark {
 		$name = strtolower($name);
 		$this->data = $this->arrayToObject($data);
 		if ($viewPath = $this->views[$name]) {
-			$SF = $this;
+			$SF = &$this;
 			include($viewPath);
 			$SF = null;
 		}
