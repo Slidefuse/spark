@@ -27,6 +27,12 @@ switch (ENVIORNMENT) {
 		exit(1);
 }
 
+class SparkLibrary {
+	function __construct(&$spark) {
+		$this->spark = $spark;
+	}
+}
+
 class SparkController {
 	function __construct(&$spark) {
 		$this->spark = $spark;
@@ -79,38 +85,6 @@ class SparkRouter {
 	}
 }
 
-/* 
-	Mostly Static SparkLibrary
-*/
-class SparkLibrary {
-
-	public static $libraries = array();
-
-	public static function register($object) {
-		self::$libraries[get_class($object)] = $object;
-	}
-
-	public static function get($name) {
-		return self::$libraries[$name];
-	}
-
-	public static function call($method) {
-		$arguments = func_get_args();
-		$method = array_shift($arguments);
-
-		$retValue = null;
-		foreach (self::$libraries as $library) {
-			$handler = array($library, $method);
-			if (is_callable($handler)) {
-				if ($ret = call_user_func_array($handler, $arguments) and $ret !== null) {
-					$retValue = $ret;
-				}
-			}
-		}
-		return $retValue;
-	}
-
-}
 
 /*
 	Main Spark Class
@@ -130,6 +104,8 @@ class Spark {
 		$this->libraryStorage = array();
 
 		$this->apps = array();
+
+		$this->controller = null;
 
 		$this->navbar = array();
 
@@ -161,12 +137,16 @@ class Spark {
 
 	// A function to get an instance of a library.
 	public function loadLibrary($name) {
+		$name = strtolower($name);
 		if ($libraryPath = $this->libraryExists($name)) {
 			if (!isset($this->libraryStorage[$name])) {
 				require($libraryPath);
-				$lib = new $name();
+				$this->libraryStorage[$name] = new $name($this);
+				$this->libraryStorage[$name]->LibraryInit();
 			} 
 			return $this->libraryStorage[$name];
+		} else {
+			echo "Error: Unknown Library `" . $name . "`";
 		}
 
 	}
@@ -241,12 +221,11 @@ class Spark {
 		$retValue = null;
 		foreach ($this->apps as $app) {
 			$handler = array($app, $method);
-			//print_r($app);
-			//if (is_callable($handler)) {
+			if (is_callable($handler)) {
 				if ($ret = call_user_func_array($handler, $arguments) and $ret !== null) {
 					$retValue = $ret;
 				}
-			//}
+			}
 		}
 		return $retValue;
 	}
@@ -254,6 +233,11 @@ class Spark {
 	// A function to render a view.
 	public function renderView($name, $data = array()) {
 		$name = strtolower($name);
+
+		if (empty($data) and isset($this->controller->data) and !empty($this->controller->data)) {
+			$data = $this->controller->data;
+		}
+
 		$this->data = $this->arrayToObject($data);
 		if ($viewPath = $this->views[$name]) {
 			$SF = &$this;
@@ -266,14 +250,14 @@ class Spark {
 	// A helper function to render the header.
 	public function renderHeader($title = "SparkTitle") {
 		$headerData = array("title" => $title);
-		SparkLibrary::call("SparkHeaderData", $headerData);
+		$this->callHook("HeaderData", $headerData);
 		$this->renderView("header", $headerData);
 	}
 
 	// A helper function to render the footer.
 	public function renderFooter() {
 		$footerData = array();
-		SparkLibrary::call("SparkFooterData", $footerData);
+		$this->callHook("FooterData", $footerData);
 		$this->renderView("footer", $footerData);
 	}	
 
@@ -300,6 +284,7 @@ class Spark {
 				$controller = new $name($this);
 				$handler = array($controller, $method);
 				if (is_callable($handler)) {
+					$this->controller = $controller;
 					call_user_func_array($handler, $data);
 				} else {
 					$this->startController("spark_error", "e404");
@@ -332,6 +317,16 @@ class Spark {
 		$this->startController($baseName, $methodName, $data);
 	}
 
+	// A utility function to get a case-insensitive item from an array.
+	public function arrayGetElement($array, $lookup) {
+		foreach ($array as $k => $v) {
+			if (strtolower($k) == strtolower($lookup)) {
+				return $v;
+			}
+		}
+		return null;
+	}
+
 	// A utility function to convert an array to an object.
 	public function arrayToObject($array) {
 		return json_decode(json_encode($array), false);
@@ -351,7 +346,7 @@ $SF = new Spark();
 	SparkPath
 */
 class SparkPath {
-	public static function url($path) {
+	public static function url($path = "") {
 		$protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
 		$url = $protocol.$_SERVER['SERVER_NAME'];
 		if ($_SERVER['SERVER_PORT'] != 80) {
