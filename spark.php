@@ -117,7 +117,7 @@ class Spark {
 		$this->navbar = array();
 
 		$this->sparkPath = realpath(__DIR__);
-		$this->appPath = realpath(__DIR__."/..");
+		$this->appPath = realpath(__DIR__."/../app/");
 
 		$this->router = new SparkRouter();
 		//$this->routeInfo = $this->router->routeInfo(); Efficiency
@@ -127,9 +127,7 @@ class Spark {
 		$this->loadApp($this->sparkPath);
 
 		//Check if the child App exists, load that too
-		if (file_exists($this->appPath."/app")) {
-			$this->loadApp($this->appPath);
-		}
+		$this->loadApp($this->appPath);
 
 		// Tell our apps we're READY!
 		$this->callHook("Init");
@@ -168,44 +166,43 @@ class Spark {
 
 	// A function that loads all the files within an app.
 	private function loadApp($path) {
-		$appPath = $path."/app";
 
-		$configFile = file_get_contents($path."/app/config.json");
+		$configFile = file_get_contents($path."/config.json");
 		$configTable = json_decode($configFile, true);
 
 		$this->config = array_merge($this->config, $configTable);
 
 		// Enviornment Config
-		if (file_exists($path."/app/config_".ENVIORNMENT.".json")) {
-			$configFile = file_get_contents($path."/app/config_".ENVIORNMENT.".json");
+		if (file_exists($path."/config_".ENVIORNMENT.".json")) {
+			$configFile = file_get_contents($path."/config_".ENVIORNMENT.".json");
 			$configTable = json_decode($configFile, true);
 			$this->config = array_merge($this->config, $configTable);
 		}
 		// /x/ End
 
-		foreach (glob($path."/app/includes/*.php") as $filename) {
+		foreach (glob($path."/includes/*.php") as $filename) {
  			require($filename);
 		}
 
-		foreach (glob($path."/app/libraries/*.php") as $filename) {
+		foreach (glob($path."/libraries/*.php") as $filename) {
  			$baseName = strtolower(basename($filename, ".php"));
 			$this->libraries[$baseName] = $filename;
 		}
 
-		foreach (glob($path."/app/controllers/*.php") as $filename) {
+		foreach (glob($path."/controllers/*.php") as $filename) {
 			$baseName = strtolower(basename($filename, ".php"));
 			$this->controllers[$baseName] = $filename;
 		}
 
-		foreach (glob($path."/app/views/*.php") as $filename) {
+		foreach (glob($path."/views/*.php") as $filename) {
 			$baseName = strtolower(basename($filename, ".php"));
 			$this->views[$baseName] = $filename;
 		}
 
-		if (file_exists($path."/app/init.php")) {
-			include($path."/app/init.php");
+		if (file_exists($path."/init.php")) {
+			include($path."/init.php");
 
-			$tokens = token_get_all(file_get_contents($path."/app/init.php"));
+			$tokens = token_get_all(file_get_contents($path."/init.php"));
 			$ctoken = false;
 			$cname = "";
 			foreach ($tokens as $token) {
