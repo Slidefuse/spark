@@ -1,4 +1,6 @@
 {
+	"appTitle": "Spark App",
+
 	"db_host": "",
 	"db_user": "",
 	"db_pass": "",

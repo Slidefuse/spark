@@ -101,6 +101,8 @@ class Spark {
 	// Spark Cosntruct Function
 	function __construct() {
 
+		SparkPath::$SF = $this;
+
 		$this->config = array();
 
 		$this->libraries = array();
@@ -246,7 +248,8 @@ class Spark {
 			$data = $this->controller->data;
 		}
 
-		$this->data = $this->arrayToObject($data);
+		$this->data = $data;
+
 		if ($viewPath = $this->views[$name]) {
 			$SF = &$this;
 			$CN = &$this->controller;
@@ -371,6 +374,14 @@ $SF = new Spark();
 	SparkPath
 */
 class SparkPath {
+
+	static $SF = false;
+
+	public static function getSF() {
+		global $SF;
+		return $SF;
+	}
+
 	public static function url($path = "") {
 		$protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
 		$url = $protocol.$_SERVER['SERVER_NAME'];
@@ -381,9 +392,12 @@ class SparkPath {
 		return $url;
 	}
 
-	public static function active($controller) {
-		//Find a way to get the $SF variable in here so I can access the router thing.
-		return false;
+	public static function active($link) {
+		$args = explode("/", $link);
+		$active = ($args[0] == "") ? "home" : $args[0];
+		$route = self::$SF->getRouter()->routeInfo();
+		$controller = ($route["controller"] == "") ? "home" : $$route["controller"];
+		return ($active = $controller);
 	}
 
 	public static function listItem($name, $controller, $path = "") {
