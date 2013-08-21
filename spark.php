@@ -397,7 +397,7 @@ class SparkPath {
 		$active = ($args[0] == "") ? "home" : $args[0];
 		$route = self::$SF->getRouter()->routeInfo();
 		$controller = ($route["controller"] == "") ? "home" : $$route["controller"];
-		return ($active = $controller);
+		return ($active == $controller);
 	}
 
 	public static function listItem($name, $controller, $path = "") {

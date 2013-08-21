@@ -25,21 +25,21 @@ class SparkNav extends SparkLibrary {
 
 			} elseif ($data["type"] == "dropdown") {
 
-				$viewInfo = array('type' => "dropdown", 'name' => $name, 'objects' => array());
+				$viewInfo = array('type' => "dropdown", 'name' => $name, 'link' => $data['link'], 'objects' => array());
 
-				if ((isset($data['checkFunc']) and $data['checkFunc']() !== false) or !isset($data['checkFunc'])) {
+				//if ((isset($data['checkFunc']) and $data['checkFunc']() !== false) or !isset($data['checkFunc']) or $data['checkFunc'] == null) {
 					foreach ($data['objects'] as $title => $link) {
 						if (gettype($link) == "array") {
 							if ($link[1]() !== false) {
-								$viewInfo['objects'][$name] = $link[0];
+								$viewInfo['objects'][$title] = $link[0];
 							}
 						} else {
-							$viewInfo['objects'][$name] = $link;
+							$viewInfo['objects'][$title] = $link;
 						}
 					}
 
 					$viewData['elements'][] = $viewInfo;
-				} 
+				//} 
 
 				
 			}
@@ -52,8 +52,8 @@ class SparkNav extends SparkLibrary {
 		$this->elements[] = array('type' => 'single', 'name' => $name, 'link' => $link, 'checkFunc' => $checkFunc);
 	}
 
-	function addDropdown($name, $objects, $checkFunc = null) {
-		$this->elements[] = array('type' => 'dropdown', 'name' => $name, 'objects' => $objects, 'checkFunc' => $checkFunc);
+	function addDropdown($name, $link, $objects, $checkFunc = null) {
+		$this->elements[] = array('type' => 'dropdown', 'link' => $link, 'name' => $name, 'objects' => $objects, 'checkFunc' => $checkFunc);
 	}
 
 	function removeElement($name) {

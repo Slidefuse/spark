@@ -9,16 +9,17 @@
 			switch ($data["type"]) {
 				case "single":
 					SparkPath::listItem($data["name"], $data["link"]);
+					echo "\n";
 					break;
 				case "dropdown":
-					echo '<li class="dropdown"'.((SparkPath::active($data["link"])) ? ' active' : '').'">';
-					echo '<a href="#" class="dropdown-toggle" data-toggle="dropdown">'.$data["name"].' <b class="caret"></b></a>';
-					echo '<ul class="dropdown-menu">';
+					echo '<li class="dropdown'.((SparkPath::active($data["link"])) ? ' active' : '').'">'."\n";
+					echo '<a href="#" class="dropdown-toggle" data-toggle="dropdown">'.$data["name"].' <b class="caret"></b></a>'."\n";
+					echo '<ul class="dropdown-menu">'."\n";
 					foreach ($data["objects"] as $name => $link) {
-						echo '<li><a href="'.SparkPath::url($link).'">'.$name.'</a></li>';
+						echo '<li><a href="'.SparkPath::url($link).'">'.$name.'</a></li>'."\n";
 					}
-					echo '</ul>';
-					echo '</li>';
+					echo '</ul>'."\n";
+					echo '</li>'."\n";
 					break;
 			}
 

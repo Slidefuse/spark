@@ -28,9 +28,9 @@
 						<p class="pull-right" style="font-size: 96px;">
 							<i class="icon-frown"></i>
 						</p>
-						<h1><?= $this->data->errorName; ?></h1>
+						<h1><?= $this->data["errorName"]; ?></h1>
 						<p>	
-							<?= $this->data->errorMessage; ?>
+							<?= $this->data["errorMessage"]; ?>
 						</p>
 					</div>
 				</div>
