@@ -1,5 +1,7 @@
 <?php
 
+session_start();
+
 /* 
  _____                  _    
 /  ___|                | |   
@@ -30,6 +32,9 @@ switch (ENVIORNMENT) {
 class SparkLibrary {
 	function __construct(&$spark) {
 		$this->spark = $spark;
+		if (isset($this->spark->db)) {
+			$this->db = &$this->spark->db;
+		}
 	}
 }
 
@@ -142,7 +147,10 @@ class Spark {
 			if (!isset($this->libraryStorage[$name])) {
 				require($libraryPath);
 				$this->libraryStorage[$name] = new $name($this);
-				$this->libraryStorage[$name]->LibraryInit();
+				$handler = array($this->libraryStorage[$name], "LibraryInit");
+				if (is_callable($handler)) {
+					$this->libraryStorage[$name]->LibraryInit();
+				}
 			} 
 			return $this->libraryStorage[$name];
 		} else {
@@ -241,7 +249,9 @@ class Spark {
 		$this->data = $this->arrayToObject($data);
 		if ($viewPath = $this->views[$name]) {
 			$SF = &$this;
+			$CN = &$this->controller;
 			include($viewPath);
+			$CN = null;
 			$SF = null;
 		}
 		$this->data = null;
@@ -282,6 +292,7 @@ class Spark {
 
 				// Construct our new class.
 				$controller = new $name($this);
+				$this->callHook("ControllerInit", $controller);
 				$handler = array($controller, $method);
 				if (is_callable($handler)) {
 					$this->controller = $controller;
@@ -330,6 +341,20 @@ class Spark {
 	// A utility function to convert an array to an object.
 	public function arrayToObject($array) {
 		return json_decode(json_encode($array), false);
+	}
+
+	// A function to get the IP address of the client.
+	public function getIP() {
+		return $_SERVER['REMOTE_ADDR'];
+	}
+
+	public function randString($length = 32) {
+		$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		$randomString = '';
+		for ($i = 0; $i < $length; $i++) {
+			$randomString .= $characters[rand(0, strlen($characters) - 1)];
+		}
+		return $randomString;
 	}
 
 	// A function to get the $SF Object
