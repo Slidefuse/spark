@@ -117,7 +117,7 @@ class Spark {
 		$this->navbar = array();
 
 		$this->sparkPath = realpath(__DIR__);
-		$this->appPath = realpath(__DIR__."/../app/");
+		$this->appPath = realpath(__DIR__."/../");
 
 		$this->router = new SparkRouter();
 		//$this->routeInfo = $this->router->routeInfo(); Efficiency

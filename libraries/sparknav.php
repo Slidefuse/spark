@@ -4,6 +4,7 @@ class SparkNav extends SparkLibrary {
 
 	function LibraryInit() {
 		$this->elements = array();
+		$this->index = array();
 	}
 
 	function renderNavbar() {
@@ -50,14 +51,18 @@ class SparkNav extends SparkLibrary {
 
 	function addElement($name, $link, $checkFunc = null) {
 		$this->elements[] = array('type' => 'single', 'name' => $name, 'link' => $link, 'checkFunc' => $checkFunc);
+		end($this->elements);
+		$this->index[$name] = key($this->elements); 
 	}
 
 	function addDropdown($name, $link, $objects, $checkFunc = null) {
 		$this->elements[] = array('type' => 'dropdown', 'link' => $link, 'name' => $name, 'objects' => $objects, 'checkFunc' => $checkFunc);
+		end($this->elements);
+		$this->index[$name] = key($this->elements);
 	}
 
 	function removeElement($name) {
-		$this->elements[$name] = null;
+		$this->elements[$this->index[$name]] = null;
 	}
 
 }

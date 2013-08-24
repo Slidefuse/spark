@@ -14,6 +14,8 @@ class SparkInit extends SparkAppInit {
 			"Logged In" => array("test/loggedin", function() { return true; })
 		));
 
+		//$this->spark->nav->removeElement("Dropdown Test");
+
 	}
 	
 }
