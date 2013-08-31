@@ -245,6 +245,7 @@ class Spark {
 			$data = $this->controller->data;
 		}
 
+		$oldData = isset($this->data) ? $this->data : $data;
 		$this->data = $data;
 
 		if ($viewPath = $this->views[$name]) {
@@ -254,7 +255,7 @@ class Spark {
 			$CN = null;
 			$SF = null;
 		}
-		$this->data = null;
+		$this->data = $oldData;
 	}
 
 	// A helper function to render the header.
