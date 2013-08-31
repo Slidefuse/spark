@@ -386,7 +386,9 @@ class SparkPath {
 		if ($_SERVER['SERVER_PORT'] != 80) {
 			$url .= ":".$_SERVER['SERVER_PORT'];
 		}
-		$url .= "/".$path;
+		if (!empty($path)) {
+			$url .= "/".$path;
+		}
 		return $url;
 	}
 
@@ -394,7 +396,7 @@ class SparkPath {
 		$args = explode("/", $link);
 		$active = ($args[0] == "") ? "home" : $args[0];
 		$route = self::$SF->getRouter()->routeInfo();
-		$controller = ($route["controller"] == "") ? "home" : $$route["controller"];
+		$controller = ($route["controller"] == "") ? "home" : $route["controller"];
 		return ($active == $controller);
 	}
 
@@ -403,8 +405,17 @@ class SparkPath {
 		if (self::active($controller)) {
 			echo "class=\"active\"";
 		}
-		echo "><a href=\"".self::url($controller."/".$path)."\">";
+		$url = $controller;
+		if (!empty($path)) {
+			$url .= "/".$path;
+		}
+
+		echo "><a href=\"".self::url($url)."\">";
 		echo $name; 
 		echo "</a></li>";
+	}
+
+	public static function redirect($url = "") {
+		header("Location: ".self::url($url));
 	}
 }
