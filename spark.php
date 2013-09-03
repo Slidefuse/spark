@@ -57,25 +57,31 @@ class SparkRouter {
 	private $pathInfo;
 	private $clientInfo;
 
-	function __construct() {
+	function __construct($base_url) {
+		$uri = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+		if(strpos($uri, $base_url) == 0) {
+			//The baseurl is in the uri. Substring it out and then use the rest.
+			$uri = substr($uri, strlen($base_url));
+		}
 		$this->server = $_SERVER['SERVER_NAME'];
-		$this->pathInfo = explode("/",$_SERVER['REQUEST_URI']);
+		$this->pathInfo = explode("/",$uri);
 		$this->clientInfo['ip'] = $_SERVER['REMOTE_ADDR'];
 	}
 
 	public function routeInfo() {
 		$items = count($this->pathInfo)-1;
-
-		$arr = array("server" => $this->server, "controller" => $this->pathInfo[1]);
+		$arr = array("server" => $this->server, "controller" => $this->pathInfo[0]);
 
 		if($items > 0) {
 			$arr2 = array();
 
-			for ($i = 1; $i <= $items; $i++) {
-				$arr2[$i-1] = $this->pathInfo[$i];
+			for ($i = 0; $i <= $items; $i++) {
+				$arr2[$i] = $this->pathInfo[$i];
 			}
 
 			$arr['args'] = $arr2;
+		} else {
+			$arr['args'] = Array();
 		}
 
 		return $arr;
@@ -119,20 +125,21 @@ class Spark {
 		$this->sparkPath = realpath(__DIR__);
 		$this->appPath = realpath(__DIR__."/../");
 
-		$this->router = new SparkRouter();
-		//$this->routeInfo = $this->router->routeInfo(); Efficiency
-		$this->ip = $this->router->getIP();
-
 		//Load Base Spark App
 		$this->loadApp($this->sparkPath);
 
 		//Check if the child App exists, load that too
 		$this->loadApp($this->appPath);
 
+		//Load Applications & configs first so we can pass the base_url.
+		$this->router = new SparkRouter($this->config["base_url"]);
+		
+		$this->ip = $this->router->getIP();
+
 		// Tell our apps we're READY!
 		$this->callHook("Init");
 
-		$this->calculateRoute();		
+		$this->calculateRoute();	
 	}
 
 	// Just a function to get a library instance.
@@ -367,6 +374,8 @@ class Spark {
 
 //Initiate Spark!
 $SF = new Spark();
+
+$ROUTER = $SF->getRouter();
 
 /*
 	SparkPath
