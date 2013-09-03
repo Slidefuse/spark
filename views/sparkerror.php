@@ -1,6 +1,6 @@
 <html>	
 	<head>
-		<title><?= $this->data->errorName; ?> - Error</title>
+		<title><?= $this->data["errorName"]; ?> - Error</title>
 		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0-wip/css/bootstrap.min.css">
 		<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0-wip/js/bootstrap.min.js"></script>
 		<link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
