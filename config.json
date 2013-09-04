@@ -1,5 +1,7 @@
 {
 	"appTitle": "SparkApplet",
+	
+	"base_url": "",
 
 	"db_host": "",
 	"db_user": "",
