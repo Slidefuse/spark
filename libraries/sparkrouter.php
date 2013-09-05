@@ -6,12 +6,21 @@ class SparkRouter {
 	private $clientInfo;
 
 	function __construct($base_url) {
-		$uri = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-		if(strpos($uri, $base_url) == 0) {
+
+		$protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+		$uri = $protocol.$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI];
+		if ($_SERVER['SERVER_PORT'] != 80) {
+			$uri .= ":".$_SERVER['SERVER_PORT'];
+		}
+
+		if(strlen($base_url) > 0 && strpos($uri, $base_url) == 0) {
 			//The baseurl is in the uri. Substring it out and then use the rest.
 			$uri = substr($uri, strlen($base_url));
+		} else {
+			//The baseurl is not set. GUESS
+			$uri = $_SERVER['REQUEST_URI'];
 		}
-		//echo $_SERVER['REQUEST_URI'];
+
 		$this->server = $_SERVER['SERVER_NAME'];
 		$this->pathInfo = explode("/",$uri);
 		$this->clientInfo['ip'] = $_SERVER['REMOTE_ADDR'];
