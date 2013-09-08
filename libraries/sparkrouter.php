@@ -1,4 +1,4 @@
-<?
+<?php
 class SparkRouter {
 	private $error = false;
 	private $server;
@@ -8,7 +8,7 @@ class SparkRouter {
 	function __construct($base_url) {
 
 		$protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-		$uri = $protocol.$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI];
+		$uri = $protocol.$_SERVER[HTTP_HOST].$_SERVER[REQUEST_URI];
 		if ($_SERVER['SERVER_PORT'] != 80) {
 			$uri .= ":".$_SERVER['SERVER_PORT'];
 		}

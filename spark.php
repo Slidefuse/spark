@@ -29,6 +29,44 @@ switch (ENVIORNMENT) {
 		exit(1);
 }
 
+class SparkLoader() {
+
+	function __construct() {
+		//Library Storage Array
+		$this->libraries = array();
+
+		//Load the Spark Base first, then the client App (up a directory)
+		$this->loadApp(realpath(__DIR__));
+		$this->loadApp(realpath(__DIR__."/../"));
+
+		$this->callHook("SparkAppInit");
+	}
+
+	function loadApp($path) {
+		foreach (glob($path."/libraries/*.php") as $filename) {
+ 			$baseName = strtolower(basename($filename, ".php"));
+			$this->libraries[$baseName] = $filename;
+		}
+	}
+
+	function callHook() {
+		$arguments = func_get_args();
+		$method = array_shift($arguments);
+
+		$retValue = null;
+		foreach ($this->libraries as $lib) {
+			$handler = array($lib, $method);
+			if (is_callable($handler)) {
+				if ($ret = call_user_func_array($handler, $arguments) and $ret !== null) {
+					$retValue = $ret;
+				}
+			}
+		}
+		return $retValue;
+	}
+
+}
+
 include("spark/libraries/sparkappinit.php");
 include("spark/libraries/sparkcontroller.php");
 include("spark/libraries/sparklibrary.php");
