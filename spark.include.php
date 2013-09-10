@@ -26,6 +26,9 @@ class SparkLoader() {
 
 	function __construct() {
 		//Load the Spark Base first, then the client App (up a directory)
+		
+		$this->setGlobal()
+		
 		$this->loadApp(realpath(__DIR__));
 		$this->loadApp(realpath(__DIR__."/../"));
 
@@ -102,7 +105,7 @@ class SparkClass {
 			return $this->spark->sharedVars[$name];
 		}
 		$trace = debug_backtrace();
-		trigger_error("Undefined ".$name." in SparkLoader. File ".$trace[0]['file']." Line ".$trace[0]['line']);
+		trigger_error("Undefined ".$name." in SparkClass Instance. File ".$trace[0]['file']." Line ".$trace[0]['line']);
 	}
 
 	function __call($method, $args) {
