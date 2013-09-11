@@ -17,7 +17,9 @@ switch (ENVIORNMENT) {
 }
 
 
-class SparkLoader() {
+class SparkLoader {
+
+	public $hasInitialized = false;
 
 	private $libBuffer = array();
 	private $libLookup = array();
@@ -30,7 +32,9 @@ class SparkLoader() {
 		$this->loadApp(realpath(__DIR__));
 		$this->loadApp(realpath(__DIR__."/../"));
 
+		$this->callHook("SetupLibraryInstances");
 		$this->callHook("SparkAppInit");
+		$this->hasInitialized = true;
 	}
 
 	function __get($name) {
@@ -44,9 +48,10 @@ class SparkLoader() {
 	function loadApp($path) {
 		//Find the libraries and initialize them!
 		foreach (glob($path."/lib/*.php") as $fileName) {
+			require($fileName);
  			$baseName = strtolower(basename($fileName, ".php"));
  			$lib = new $baseName($this, $baseName);
- 			$index = array_push($this->libStorage, $lib);
+ 			$index = array_push($this->libBuffer, $lib);
 			$this->libLookup[$baseName] = $index;
 			$lib->baseName = $baseName;
 			$this->setGlobal($baseName, $this->libLookup[$baseName]);
@@ -70,7 +75,7 @@ class SparkLoader() {
 
 		$retValue = null;
 		foreach ($this->libBuffer as $lib) {
-			if (!empty($lib) and $lib->baseName != $methodLib) { continue; }
+			if (!empty($methodLib) and $lib->baseName != $methodLib) { continue; }
 			$handler = array($lib, $method);
 			if (is_callable($handler)) {
 				if ($ret = call_user_func_array($handler, $arguments) and $ret !== null) {
@@ -84,7 +89,7 @@ class SparkLoader() {
 	function getLibraries() {
 		$ret = array();
 		foreach ($this->libBuffer as $lib) {
-			ret[$lib->baseName] = &$lib;
+			$ret[$lib->baseName] = &$lib;
 		}
 		return $ret;
 	}
@@ -101,12 +106,20 @@ class SparkClass {
 		$this->baseName = $baseName;
 		$this->spark = $spark;
 
-		foreach ($this->spark->getLibraries() as $name => $lib) {
-			$this->$name = $lib;
+		//Manually setup library instances if Spark is already setup!
+		if ($this->spark->hasInitialized) {
+			$this->SetupLibraryInstances();
 		}
 
+		//Call our custom Constructor.
 		if (is_callable(array($this, "SparkConstruct"))) {
 			$this->SparkConstruct();
+		}
+	}
+
+	function SetupLibraryInstances() {
+		foreach ($this->spark->getLibraries() as $name => $lib) {
+			$this->$name = $lib;
 		}
 	}
 
@@ -119,5 +132,7 @@ class SparkController extends SparkClass {
 class SparkLibrary extends SparkClass {
 
 }
+
+$Spark = new SparkLoader();
 
 ?>

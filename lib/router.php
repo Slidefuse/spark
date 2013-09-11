@@ -1,6 +1,6 @@
 <?php
 
-class SparkRouter extends SparkLibrary {
+class Router extends SparkLibrary {
 	
 	private $routeInfo = array();
 	private $clientInfo = array();
@@ -17,26 +17,27 @@ class SparkRouter extends SparkLibrary {
 			$uri .= ":" . $this->getPort();
 		}
 		$uri .= $this->getPath();
-		
 	}
 	
 	function getServer() {
 		return $_SERVER['SERVER_NAME'];
 	}
+
+	function getPort() {
+		return $_SERVER['SERVER_PORT'];
+	}
 	
 	function getPath($array = false) {
-		$uri = substr($_SERVER['REQUEST_URI'], 1);)
+		$uri = substr($_SERVER['REQUEST_URI'], 1);
 		if (!$array) {
 			return $uri;
 		}
-		return explode("/", $this->getPath())
+		return explode("/", $this->getPath());
 	}
 	
 	function getProtocol() {
 		return ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https" : "http";
 	}
 	
-	function 
-
 }
 ?>
