@@ -27,8 +27,6 @@ class SparkLoader() {
 	function __construct() {
 		//Load the Spark Base first, then the client App (up a directory)
 		
-		$this->setGlobal()
-		
 		$this->loadApp(realpath(__DIR__));
 		$this->loadApp(realpath(__DIR__."/../"));
 
@@ -73,7 +71,7 @@ class SparkLoader() {
 		$retValue = null;
 		foreach ($this->libBuffer as $lib) {
 			if (!empty($lib) and $lib->baseName != $methodLib) { continue; }
-			$handler = array($lib, $method)
+			$handler = array($lib, $method);
 			if (is_callable()) {
 				if ($ret = call_user_func_array($handler, $arguments) and $ret !== null) {
 					$retValue = $ret;
