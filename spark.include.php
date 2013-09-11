@@ -72,13 +72,21 @@ class SparkLoader() {
 		foreach ($this->libBuffer as $lib) {
 			if (!empty($lib) and $lib->baseName != $methodLib) { continue; }
 			$handler = array($lib, $method);
-			if (is_callable()) {
+			if (is_callable($handler)) {
 				if ($ret = call_user_func_array($handler, $arguments) and $ret !== null) {
 					$retValue = $ret;
 				}
 			}
 		}
 		return $retValue;
+	}
+	
+	function getLibraries() {
+		$ret = array();
+		foreach ($this->libBuffer as $lib) {
+			ret[$lib->baseName] = &$lib;
+		}
+		return $ret;
 	}
 
 }
@@ -93,26 +101,13 @@ class SparkClass {
 		$this->baseName = $baseName;
 		$this->spark = $spark;
 
+		foreach ($this->spark->getLibraries() as $name => $lib) {
+			$this->$name = $lib;
+		}
+
 		if (is_callable(array($this, "SparkConstruct"))) {
 			$this->SparkConstruct();
 		}
-	}
-
-	function __get($name) {
-		if (array_key_exists($name, $this->spark->sharedVars)) {
-			return $this->spark->sharedVars[$name];
-		}
-		$trace = debug_backtrace();
-		trigger_error("Undefined ".$name." in SparkClass Instance. File ".$trace[0]['file']." Line ".$trace[0]['line']);
-	}
-
-	function __call($method, $args) {
-		if (!isset($this->spark)) { return false; }
-		if (!empty($this->spark->sharedVars[$method])) {
-			return $this->spark->sharedVars[$method]
-		}
-		if (!is_callable($handler)) { return false; }
-		return call_user_func_array($handler, $args);
 	}
 
 }
