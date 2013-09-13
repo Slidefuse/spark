@@ -26,6 +26,8 @@ class SparkLoader {
 
 	public $sharedVars = array();
 
+	public $appDirs = array();
+
 	function __construct() {
 		//Load the Spark Base first, then the client App (up a directory)
 		
@@ -33,7 +35,8 @@ class SparkLoader {
 		$this->loadApp(realpath(__DIR__."/../"));
 
 		$this->callHook("SetupLibraryInstances");
-		$this->callHook("SparkAppInit");
+
+		$this->callHook("SparkAppInit", $appDirs);
 		$this->hasInitialized = true;
 	}
 
@@ -46,6 +49,9 @@ class SparkLoader {
 	}
 
 	function loadApp($path) {
+
+		array_push($this->appDirs, $path);
+
 		//Find the libraries and initialize them!
 		foreach (glob($path."/lib/*.php") as $fileName) {
 			require($fileName);
@@ -103,7 +109,7 @@ class SparkClass {
 	public $baseName;
 
 	function __construct($spark, $baseName = "") {
-		$this->baseName = $baseName;
+		$this->baseName = get_class($this);
 		$this->spark = $spark;
 
 		//Manually setup library instances if Spark is already setup!
@@ -121,6 +127,18 @@ class SparkClass {
 		foreach ($this->spark->getLibraries() as $name => $lib) {
 			$this->$name = $lib;
 		}
+	}
+
+	/* Common App Functions */
+
+	function baseurl($path) {
+		return $this->router->getBaseUrl() . $path;
+	}
+
+	function callHook() {
+		$arguments = func_get_args();
+		$handler = array($this->spark, "callHook");
+		return call_user_func_array($handler, $arguments);
 	}
 
 }

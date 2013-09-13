@@ -5,18 +5,29 @@ class Router extends SparkLibrary {
 	private $routeInfo = array();
 	private $clientInfo = array();
 	
-	function SparkAppInit() {
+	function SparkAppInit($appDirs) {
 		$this->processRoute();
 	}
 	
 	function processRoute() {
+		$data = array();
+
+		$data["server"] = $this->getServer();
+		$data["port"] = $this->getPort();
+		$data["args"] = $this->getPath(true);
+
+		$this->callHook("PostProcessRoute", $data);
+	}
+
+	function getBaseURL() {
 		$uri  = $this->getProtocol();
 		$uri .= "://";
 		$uri .= $this->getServer();
 		if ($this->getPort() != 80) {
 			$uri .= ":" . $this->getPort();
 		}
-		$uri .= $this->getPath();
+		$uri .= "/";
+		return $uri;
 	}
 	
 	function getServer() {
