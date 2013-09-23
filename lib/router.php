@@ -16,7 +16,7 @@ class Router extends SparkLibrary {
 		$data["port"] = $this->getPort();
 		$data["args"] = $this->getPath(true);
 
-		$this->hook->callHook("PostProcessRoute", $data);
+		$this->hook->call("PostProcessRoute", $data);
 	}
 
 	function getBaseURL() {
