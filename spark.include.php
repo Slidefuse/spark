@@ -35,9 +35,9 @@ class SparkLoader {
 		$libArray = $this->getLibraries();
 		$this->hook->injectLibraries($libArray);
 
-		$this->hook->callHook("SetupLibraryInstances", $libArray);
+		$this->hook->call("SetupLibraryInstances", $libArray);
 
-		$this->hook->callHook("SparkAppInit", $this->appDirs);
+		$this->hook->call("SparkAppInit", $this->appDirs);
 		$this->hasInitialized = true;
 	}
 
