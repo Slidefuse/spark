@@ -21,10 +21,8 @@ class SparkLoader {
 
 	public $hasInitialized = false;
 
-	private $libBuffer = array();
-	private $libLookup = array();
-
-	public $sharedVars = array();
+	public $libBuffer = array();
+	public $libLookup = array();
 
 	public $appDirs = array();
 
@@ -34,18 +32,20 @@ class SparkLoader {
 		$this->loadApp(realpath(__DIR__));
 		$this->loadApp(realpath(__DIR__."/../"));
 
-		$this->callHook("SetupLibraryInstances");
+		$libArray = $this->getLibraries();
+		$this->hook->injectLibraries($libArray);
 
-		$this->callHook("SparkAppInit", $appDirs);
+		$this->hook->callHook("SetupLibraryInstances", $libArray);
+
+		$this->hook->callHook("SparkAppInit", $this->appDirs);
 		$this->hasInitialized = true;
 	}
 
 	function __get($name) {
-		if (array_key_exists($name, $this->sharedVars)) {
-			return $this->sharedVars[$name];
+		$libs = $this->getLibraries();
+		if (isset($libs[$name])) {
+			return $libs[$name];
 		}
-		$trace = debug_backtrace();
-		trigger_error("Undefined ".$name." in SparkLoader. File ".$trace[0]['file']." Line ".$trace[0]['line']);
 	}
 
 	function loadApp($path) {
@@ -60,42 +60,13 @@ class SparkLoader {
  			$index = array_push($this->libBuffer, $lib);
 			$this->libLookup[$baseName] = $index;
 			$lib->baseName = $baseName;
-			$this->setGlobal($baseName, $this->libLookup[$baseName]);
 		}
-	}
-
-	function setGlobal($name, &$object) {
-		$this->sharedVars[$name] = $object;
-	}
-
-	function callHook() {
-		$arguments = func_get_args();
-		$method = array_shift($arguments);
-		$methodLib = "";
-
-		if (stristr($method, ":")) {
-			$split = explode(":", $method);
-			$methodLib = $split[0];
-			$method = $split[1];
-		}
-
-		$retValue = null;
-		foreach ($this->libBuffer as $lib) {
-			if (!empty($methodLib) and $lib->baseName != $methodLib) { continue; }
-			$handler = array($lib, $method);
-			if (is_callable($handler)) {
-				if ($ret = call_user_func_array($handler, $arguments) and $ret !== null) {
-					$retValue = $ret;
-				}
-			}
-		}
-		return $retValue;
 	}
 	
 	function getLibraries() {
 		$ret = array();
-		foreach ($this->libBuffer as $lib) {
-			$ret[$lib->baseName] = &$lib;
+		foreach ($this->libBuffer as &$lib) {
+			$ret[$lib->baseName] = $lib;
 		}
 		return $ret;
 	}
@@ -107,6 +78,7 @@ class SparkLoader {
 class SparkClass {
 
 	public $baseName;
+	private $libBuffer;
 
 	function __construct($spark, $baseName = "") {
 		$this->baseName = get_class($this);
@@ -123,24 +95,16 @@ class SparkClass {
 		}
 	}
 
-	function SetupLibraryInstances() {
-		foreach ($this->spark->getLibraries() as $name => $lib) {
-			$this->$name = $lib;
+	function __get($name) {
+		$libs = $this->libBuffer;
+		if (isset($libs[$name])) {
+			return $libs[$name];
 		}
 	}
 
-	/* Common App Functions */
-
-	function baseurl($path) {
-		return $this->router->getBaseUrl() . $path;
+	function SetupLibraryInstances($libs) {
+		$this->libBuffer = $libs;
 	}
-
-	function callHook() {
-		$arguments = func_get_args();
-		$handler = array($this->spark, "callHook");
-		return call_user_func_array($handler, $arguments);
-	}
-
 }
 
 class SparkController extends SparkClass {
