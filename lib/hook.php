@@ -2,7 +2,7 @@
 
 class Hook extends SparkLibrary {
 	
-	public function callHook() {
+	public function call() {
 		$arguments = func_get_args();
 		$method = array_shift($arguments);
 		$methodLib = "";
