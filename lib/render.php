@@ -26,8 +26,21 @@ class Render extends SparkLibrary {
 			foreach (glob($path."/src/*.php") as $fileName) {
  				$baseName = strtolower(basename($fileName, ".php"));
  				if ($baseName == $controllerName) {
- 					include($fileName);
-	 				$controller = new $baseName($this, $baseName);
+ 					//Include File
+ 					require($fileName);
+ 					//Precache our libraries :)
+ 					$libs = $this->spark->getLibraries();
+ 					//Set our default classname.
+ 					$className = $baseName;
+ 					//If our custom app class exists, use that!
+ 					if (class_exists("sf".$baseName)) {
+ 						$className = "sf".$baseName;
+ 					}
+ 					//Initialize the controller
+ 					$controller = new $className($this, $baseName);
+ 	 				//Inject our lib array!
+	 				$controller->injectLibraries($libs);
+	 				//Bam.
 	 				return $controller;
 	 			}
 			}
@@ -46,14 +59,31 @@ class Render extends SparkLibrary {
 		$this->view("error", $data);
 	}
 
-	function view($viewName, $data = array()) {
+	public function view($viewName, $data = array()) {
 		foreach ($this->spark->appDirs as $path) {
 			foreach (glob($path."/view/*.php") as $fileName) {
-				$this->data = $data;
- 				require($fileName);
+				$baseName = strtolower(basename($fileName, ".php"));
+				if ($baseName == $viewName) {
+					$this->data = $data;
+ 					require($fileName);
+ 					return true;
+				}
 			}
 		}
 		return false;
+	}
+
+	public function header($title, $data = array()) {
+		$data["pageTitle"] = $title;
+		$this->view("header", $data);
+	}
+
+	public function footer($data = array()) {
+		$this->view("footer", $data);
+	}
+
+	public function baseurl($path = "") {
+		return $this->router->getBaseURL().$path;
 	}
 	
 }

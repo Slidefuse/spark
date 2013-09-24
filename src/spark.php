@@ -7,7 +7,8 @@ class Spark extends SparkController {
 	}
 
 	function home() {
-		$this->render->view("error", array("title" => "Spark Status", "message" => "I guess it's working"));		
+		$this->render->view("error", array("title" => "Spark Status", "message" => "I guess it's working"));	
+
 	}
 
 }

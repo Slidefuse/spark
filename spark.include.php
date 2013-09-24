@@ -32,6 +32,8 @@ class SparkLoader {
 		$this->loadApp(realpath(__DIR__));
 		$this->loadApp(realpath(__DIR__."/../"));
 
+		$this->appDirs = array_reverse($this->appDirs);
+
 		$libArray = $this->getLibraries();
 		$this->hook->injectLibraries($libArray);
 
@@ -41,7 +43,7 @@ class SparkLoader {
 		$this->hasInitialized = true;
 	}
 
-	function __get($name) {
+	public function __get($name) {
 		$libs = $this->getLibraries();
 		if (isset($libs[$name])) {
 			return $libs[$name];
@@ -63,7 +65,7 @@ class SparkLoader {
 		}
 	}
 	
-	function getLibraries() {
+	public function getLibraries() {
 		$ret = array();
 		foreach ($this->libBuffer as &$lib) {
 			$ret[$lib->baseName] = $lib;
@@ -78,7 +80,7 @@ class SparkLoader {
 class SparkClass {
 
 	public $baseName;
-	private $libBuffer;
+	public $libBuffer;
 
 	function __construct($spark, $baseName = "") {
 		$this->baseName = get_class($this);
@@ -93,6 +95,10 @@ class SparkClass {
 		if (is_callable(array($this, "SparkConstruct"))) {
 			$this->SparkConstruct();
 		}
+	}
+
+	function injectLibraries($libs) {
+		$this->libBuffer = $libs;
 	}
 
 	function __get($name) {
